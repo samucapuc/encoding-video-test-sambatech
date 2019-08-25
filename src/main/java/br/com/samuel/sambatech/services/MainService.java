@@ -1,5 +1,6 @@
 package br.com.samuel.sambatech.services;
 
+import java.net.URI;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,5 +64,11 @@ public class MainService {
     } catch (Exception e) {
       throw new RuntimeException(e.toString());
     }
+  }
+
+  protected String getDomainUrl(String url) throws Exception {
+    URI uri = new URI(url);
+    String domain = uri.getHost();
+    return domain.startsWith("www.") ? domain.substring(4) : domain;
   }
 }

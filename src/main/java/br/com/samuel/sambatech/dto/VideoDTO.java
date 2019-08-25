@@ -13,7 +13,9 @@ public class VideoDTO implements Ivideo {
    * 
    */
   private static final long serialVersionUID = 1L;
-  private String urlOutputVideo;
-  private String urlIntputVideo;
-  private String nameFile;
+  private String id;
+  private String outMessage;
+  private String urlInputVideo;
+  private String name;
+  private String status;
 }

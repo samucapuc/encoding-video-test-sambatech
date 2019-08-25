@@ -1,12 +1,18 @@
 package br.com.samuel.sambatech.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import br.com.samuel.sambatech.domain.Config;
+import br.com.samuel.sambatech.domain.VideoEnconding;
+import br.com.samuel.sambatech.dto.VideoDTO;
 import br.com.samuel.sambatech.dto.audio.AudioAccDTO;
 import br.com.samuel.sambatech.dto.audio.VideoH264DTO;
+import br.com.samuel.sambatech.dto.inputs.InputFileHttpDTO;
 import br.com.samuel.sambatech.dto.outputs.OutputS3DTO;
+import br.com.samuel.sambatech.repositories.VideoEncondingRepository;
+import br.com.samuel.sambatech.utils.ConverterUtils;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -36,7 +42,14 @@ public class VideoEncodingService extends MainService {
   @Value("${bit.movin.url.api.configurations.video.h264}")
   private String urlEndpointConfigVideoH264;
 
+  @Value("${bit.movin.url.api.inputs.http}")
+  private String urlEndpointInputHttpFile;
 
+  @Autowired
+  private ConverterUtils converter;
+
+  @Autowired
+  private VideoEncondingRepository videoEncondingRepository;
 
   /**
    * Gera as configurações e grava os ids no banco para nao precisar de gerar a cada requisição de
@@ -93,4 +106,30 @@ public class VideoEncodingService extends MainService {
     cf.setIdVideoH264(videoH264.getId());
   }
 
+  public VideoDTO encondingVideo(VideoDTO vdto) throws Exception {
+    VideoEnconding ve = videoEncondingRepository.findByName(vdto.getName());
+    if (ve != null) {
+      return (VideoDTO) converter.convertObject(ve, VideoDTO.class);
+    }
+    ve = videoEncondingRepository
+        .save((VideoEnconding) converter.convertObject(vdto, VideoEnconding.class));
+    vdto.setId(ve.getId());
+    // get config output s3 mongodb
+    Config cf = configService.findFirst();
+    System.out.println("IdOutputS3=" + cf.getIdOutputS3());
+    System.out.println("AudioAccId=" + cf.getIdAudioAcc());
+    System.out.println("VideoH264Id=" + cf.getIdVideoH264());
+
+    InputFileHttpDTO ifh = createHttpInput(vdto);
+    System.out.println("IdInputFile=" + ifh.getId());
+    return (VideoDTO) converter.convertObject(ve, VideoDTO.class);
+  }
+
+  private InputFileHttpDTO createHttpInput(VideoDTO vdto) throws Exception {
+    /// encoding/inputs/http
+    InputFileHttpDTO ifh = returnObject(urlEndpointInputHttpFile,
+        new InputFileHttpDTO(vdto.getId(), vdto.getName(), getDomainUrl(vdto.getUrlInputVideo())),
+        new TypeReference<InputFileHttpDTO>() {});
+    return ifh;
+  }
 }

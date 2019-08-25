@@ -7,4 +7,5 @@ import br.com.samuel.sambatech.domain.VideoEnconding;
 @Repository
 public interface VideoEncondingRepository extends MongoRepository<VideoEnconding, String> {
 
+  public VideoEnconding findByName(String name);
 }
