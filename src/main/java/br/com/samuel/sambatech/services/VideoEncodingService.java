@@ -1,10 +1,13 @@
 package br.com.samuel.sambatech.services;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.type.TypeReference;
 import br.com.samuel.sambatech.domain.Config;
 import br.com.samuel.sambatech.domain.VideoEnconding;
@@ -20,16 +23,24 @@ import br.com.samuel.sambatech.dto.streams.InputFileDTO;
 import br.com.samuel.sambatech.dto.streams.StreamsInputDTO;
 import br.com.samuel.sambatech.repositories.VideoEncondingRepository;
 import br.com.samuel.sambatech.utils.ConverterUtils;
-import lombok.AllArgsConstructor;
 
 @Service
-@AllArgsConstructor
 public class VideoEncodingService extends MainService {
 
   public static final String KEY_STREAM_AUDIO = "KEY_STREAM_AUDIO";
   public static final String KEY_STREAM_VIDEO = "KEY_STREAM_AUDIO";
 
-  private final ConfigService configService;
+  @Autowired
+  private ConfigService configService;
+
+  @Autowired
+  private S3Service s3Service;
+
+  @Autowired
+  private ConverterUtils converter;
+
+  @Autowired
+  private VideoEncondingRepository videoEncondingRepository;
 
   @Value("${bucket.videos.aws.s3}")
   private String bucketS3;
@@ -61,9 +72,7 @@ public class VideoEncodingService extends MainService {
   @Value("${bit.movin.url.api.muxings.fmp4}")
   private String urlEndpointMuxingsFmp4;
 
-  private final ConverterUtils converter;
 
-  private final VideoEncondingRepository videoEncondingRepository;
 
   /**
    * Gera as configurações e grava os ids no banco para nao precisar de gerar a cada requisição de
@@ -120,12 +129,11 @@ public class VideoEncodingService extends MainService {
     cf.setIdVideoH264(videoH264.getId());
   }
 
-  public VideoDTO encondingVideo(VideoDTO vdto) throws Exception {
-    VideoEnconding ve = videoEncondingRepository.findByName(vdto.getName());
-    if (ve != null) {
-      return (VideoDTO) converter.convertObject(ve, VideoDTO.class);
-    }
-    ve = videoEncondingRepository
+  public VideoDTO encondingVideo(MultipartFile multipartFile) throws Exception {
+    URL url = s3Service.uploadFile(multipartFile);
+    VideoDTO vdto =
+        new VideoDTO(url.toString(), multipartFile.getOriginalFilename(), url.getAuthority());
+    VideoEnconding ve = videoEncondingRepository
         .save((VideoEnconding) converter.convertObject(vdto, VideoEnconding.class));
     vdto.setId(ve.getId());
     // get config output s3 mongodb
@@ -148,7 +156,7 @@ public class VideoEncodingService extends MainService {
   private InputFileHttpDTO createHttpInput(VideoDTO vdto) throws Exception {
     /// encoding/inputs/http
     InputFileHttpDTO ifh = returnObject(urlEndpointInputHttpFile,
-        new InputFileHttpDTO(vdto.getId(), vdto.getName(), getDomainUrl(vdto.getUrlInputVideo())),
+        new InputFileHttpDTO(vdto.getId(), vdto.getName(), vdto.getServer()),
         new TypeReference<InputFileHttpDTO>() {});
     return ifh;
   }
