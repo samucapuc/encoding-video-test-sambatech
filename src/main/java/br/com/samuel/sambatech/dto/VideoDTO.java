@@ -16,6 +16,12 @@ public class VideoDTO implements Ivideo {
   private String id;
   private String outMessage;
   private String urlInputVideo;
+  private String urlOutputVideo;
   private String name;
   private String status;
+
+  public VideoDTO(String urlInputVideo, String name) {
+    this.name = name;
+    this.urlInputVideo = urlInputVideo;
+  }
 }
