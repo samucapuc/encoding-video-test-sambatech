@@ -1,4 +1,4 @@
-package br.com.samuel.sambatech.dto.streams;
+package br.com.samuel.sambatech.dto.error;
 
 import br.com.samuel.sambatech.interfaces.Ivideo;
 import lombok.AllArgsConstructor;
@@ -8,12 +8,13 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class StreamInputDTO implements Ivideo {
-
+public class ErrorResponseDTO implements Ivideo {
   /**
-   * 
-   */
+  * 
+  */
   private static final long serialVersionUID = 1L;
-  private String codecConfigId;
-  private InputFileDTO inputStreams;
+  private Integer code;
+  private String message;
+  private String developerMessage;
+
 }

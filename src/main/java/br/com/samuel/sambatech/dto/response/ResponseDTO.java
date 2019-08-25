@@ -1,4 +1,4 @@
-package br.com.samuel.sambatech.dto.encoding;
+package br.com.samuel.sambatech.dto.response;
 
 import br.com.samuel.sambatech.interfaces.Ivideo;
 import lombok.AllArgsConstructor;
@@ -8,15 +8,13 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EncodingDTO implements Ivideo {
+public class ResponseDTO implements Ivideo {
   /**
-   * 
-   */
+  * 
+  */
   private static final long serialVersionUID = 1L;
-  private String id;
-  private String name;
+  private String requestId;
+  private String status;
+  private Object data;
 
-  public EncodingDTO(String name) {
-    this.name = name;
-  }
 }
