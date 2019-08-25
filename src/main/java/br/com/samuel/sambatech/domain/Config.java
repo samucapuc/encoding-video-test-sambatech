@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(collection = "video_encoding")
+@Document(collection = "config")
 public class Config {
   @Id
   private String id;
