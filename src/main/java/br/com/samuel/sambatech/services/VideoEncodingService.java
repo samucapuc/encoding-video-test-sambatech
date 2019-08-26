@@ -23,12 +23,16 @@ import br.com.samuel.sambatech.dto.streams.InputFileDTO;
 import br.com.samuel.sambatech.dto.streams.StreamsInputDTO;
 import br.com.samuel.sambatech.repositories.VideoEncondingRepository;
 import br.com.samuel.sambatech.utils.ConverterUtils;
+import lombok.AllArgsConstructor;
 
 @Service
-public class VideoEncodingService extends MainService {
+@AllArgsConstructor
+public class VideoEncodingService {
 
   public static final String KEY_STREAM_AUDIO = "KEY_STREAM_AUDIO";
   public static final String KEY_STREAM_VIDEO = "KEY_STREAM_AUDIO";
+
+  private final MainService mainService;
 
   @Autowired
   private ConfigService configService;
@@ -72,7 +76,9 @@ public class VideoEncodingService extends MainService {
   @Value("${bit.movin.url.api.muxings.fmp4}")
   private String urlEndpointMuxingsFmp4;
 
-
+  public VideoEncodingService(MainService mainService) {
+    this.mainService = mainService;
+  }
 
   /**
    * Gera as configurações e grava os ids no banco para nao precisar de gerar a cada requisição de
@@ -97,7 +103,7 @@ public class VideoEncodingService extends MainService {
    */
   public void createOutputS3(Config cf) {
     // encoding/outputs/s3
-    OutputS3DTO os3 = returnObject(urlEndpointOutputS3,
+    OutputS3DTO os3 = mainService.returnObject(urlEndpointOutputS3,
         new OutputS3DTO(bucketS3, accessKeyS3, secretKeyS3), new TypeReference<OutputS3DTO>() {});
     System.out.println("IdOutputS3=" + os3.getId());
     cf.setIdOutputS3(os3.getId());
@@ -110,7 +116,7 @@ public class VideoEncodingService extends MainService {
    */
   public void createAudioAcc(Config cf) {
     // encoding/configurations/audio/aac
-    AudioAccDTO aacc = returnObject(urlEndpointConfigAudioAcc, new AudioAccDTO(),
+    AudioAccDTO aacc = mainService.returnObject(urlEndpointConfigAudioAcc, new AudioAccDTO(),
         new TypeReference<AudioAccDTO>() {});
     System.out.println("AudioAccId=" + aacc.getId());
     cf.setIdAudioAcc(aacc.getId());
@@ -123,8 +129,8 @@ public class VideoEncodingService extends MainService {
    */
   public void createVideoH264(Config cf) {
     // encoding/configurations/video/h264
-    VideoH264DTO videoH264 = returnObject(urlEndpointConfigVideoH264, new VideoH264DTO(),
-        new TypeReference<VideoH264DTO>() {});
+    VideoH264DTO videoH264 = mainService.returnObject(urlEndpointConfigVideoH264,
+        new VideoH264DTO(), new TypeReference<VideoH264DTO>() {});
     System.out.println("VideoH264Id=" + videoH264.getId());
     cf.setIdVideoH264(videoH264.getId());
   }
@@ -155,7 +161,7 @@ public class VideoEncodingService extends MainService {
 
   private InputFileHttpDTO createHttpInput(VideoDTO vdto) throws Exception {
     /// encoding/inputs/http
-    InputFileHttpDTO ifh = returnObject(urlEndpointInputHttpFile,
+    InputFileHttpDTO ifh = mainService.returnObject(urlEndpointInputHttpFile,
         new InputFileHttpDTO(vdto.getId(), vdto.getName(), vdto.getServer()),
         new TypeReference<InputFileHttpDTO>() {});
     return ifh;
@@ -163,9 +169,8 @@ public class VideoEncodingService extends MainService {
 
   private EncodingDTO createEncoding(VideoDTO vdto) {
     // encoding/encodings
-    EncodingDTO encoding = returnObject(urlEndpointEncoding, new EncodingDTO(vdto.getName()),
+    return mainService.returnObject(urlEndpointEncoding, new EncodingDTO(vdto.getName()),
         new TypeReference<EncodingDTO>() {});
-    return encoding;
   }
 
   private Map<String, StreamsInputDTO> createStreamsAudioAndVideo(VideoDTO vdto, Config cf,
@@ -173,7 +178,7 @@ public class VideoEncodingService extends MainService {
     Map<String, StreamsInputDTO> mapStreams = new HashMap<>();
     // encoding/encodings/{encoding_id}/streams
     StreamsInputDTO siAudio =
-        returnObject(urlEndpointStreams.replaceAll("\\{encoding_id}", encoding.getId()),
+        mainService.returnObject(urlEndpointStreams.replaceAll("\\{encoding_id}", encoding.getId()),
             new StreamsInputDTO(cf.getIdAudioAcc(),
                 Arrays.asList(new InputFileDTO(ifh.getId(), vdto.getName()))),
             new TypeReference<StreamsInputDTO>() {});
@@ -182,7 +187,7 @@ public class VideoEncodingService extends MainService {
     mapStreams.put(KEY_STREAM_AUDIO, siAudio);
 
     StreamsInputDTO siVideo =
-        returnObject(urlEndpointStreams.replaceAll("\\{encoding_id}", encoding.getId()),
+        mainService.returnObject(urlEndpointStreams.replaceAll("\\{encoding_id}", encoding.getId()),
             new StreamsInputDTO(cf.getIdVideoH264(),
                 Arrays.asList(new InputFileDTO(ifh.getId(), vdto.getName()))),
             new TypeReference<StreamsInputDTO>() {});
@@ -195,18 +200,18 @@ public class VideoEncodingService extends MainService {
   private void createFmp4AudioAndVideo(VideoEnconding ve, Map<String, StreamsInputDTO> mapStreams,
       EncodingDTO encoding, Config cf) {
     String pathS3 = "ENCODING/" + ve.getId() + "/AUDIO";
-    Fmp4DTO fmp4Audio =
-        returnObject(urlEndpointMuxingsFmp4.replaceAll("\\{encoding_id}", encoding.getId()),
-            new Fmp4DTO(Arrays.asList(mapStreams.get(KEY_STREAM_AUDIO)),
-                Arrays.asList(new OutputDTO(cf.getIdOutputS3(), pathS3 + "/AUDIO"))),
-            new TypeReference<Fmp4DTO>() {});
+    Fmp4DTO fmp4Audio = mainService.returnObject(
+        urlEndpointMuxingsFmp4.replaceAll("\\{encoding_id}", encoding.getId()),
+        new Fmp4DTO(Arrays.asList(mapStreams.get(KEY_STREAM_AUDIO)),
+            Arrays.asList(new OutputDTO(cf.getIdOutputS3(), pathS3 + "/AUDIO"))),
+        new TypeReference<Fmp4DTO>() {});
     System.out.println("IdFmp4Audio=" + fmp4Audio.getId());
 
-    Fmp4DTO fmp4Video =
-        returnObject(urlEndpointMuxingsFmp4.replaceAll("\\{encoding_id}", encoding.getId()),
-            new Fmp4DTO(Arrays.asList(mapStreams.get(KEY_STREAM_VIDEO)),
-                Arrays.asList(new OutputDTO(cf.getIdOutputS3(), pathS3 + "/VIDEO"))),
-            new TypeReference<Fmp4DTO>() {});
+    Fmp4DTO fmp4Video = mainService.returnObject(
+        urlEndpointMuxingsFmp4.replaceAll("\\{encoding_id}", encoding.getId()),
+        new Fmp4DTO(Arrays.asList(mapStreams.get(KEY_STREAM_VIDEO)),
+            Arrays.asList(new OutputDTO(cf.getIdOutputS3(), pathS3 + "/VIDEO"))),
+        new TypeReference<Fmp4DTO>() {});
     System.out.println("IdFmp4Video=" + fmp4Video.getId());
   }
 }

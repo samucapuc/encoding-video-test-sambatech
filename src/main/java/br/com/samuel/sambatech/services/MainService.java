@@ -1,18 +1,18 @@
 package br.com.samuel.sambatech.services;
 
-import java.net.URI;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import br.com.samuel.sambatech.dto.error.ErrorResponseDTO;
 
-
+@Service
 public class MainService {
 
   public static final String KEY_RESULT_BIT_MOVIN = "result";
@@ -64,11 +64,5 @@ public class MainService {
     } catch (Exception e) {
       throw new RuntimeException(e.toString());
     }
-  }
-
-  protected String getDomainUrl(String url) throws Exception {
-    URI uri = new URI(url);
-    String domain = uri.getHost();
-    return domain.startsWith("www.") ? domain.substring(4) : domain;
   }
 }

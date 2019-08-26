@@ -20,6 +20,10 @@ public class OutputS3DTO implements Ivideo {
   private String accessKey;
   private String secretKey;
 
+  public OutputS3DTO(String id) {
+    this.id = id;
+  }
+
   public OutputS3DTO(String bucketName, String accessKey, String secretKey) {
     this.bucketName = bucketName;
     this.accessKey = accessKey;
