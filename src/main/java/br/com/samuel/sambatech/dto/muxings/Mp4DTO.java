@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Fmp4DTO implements Ivideo {
+public class Mp4DTO implements Ivideo {
   /**
    * 
    */
@@ -21,10 +21,12 @@ public class Fmp4DTO implements Ivideo {
   private List<StreamsInputDTO> streams;
   private List<OutputDTO> outputs;
   private Integer segmentLength = 4;
+  private String filename;
 
-  public Fmp4DTO(List<StreamsInputDTO> streams, List<OutputDTO> outputs) {
+  public Mp4DTO(List<StreamsInputDTO> streams, List<OutputDTO> outputs, String filename) {
     this.streams = streams;
     this.outputs = outputs;
+    this.filename = filename;
   }
 
 }
