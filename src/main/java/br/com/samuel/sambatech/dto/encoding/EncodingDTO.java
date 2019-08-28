@@ -15,8 +15,10 @@ public class EncodingDTO implements Ivideo {
   private static final long serialVersionUID = 1L;
   private String id;
   private String name;
+  private String status;
 
-  public EncodingDTO(String name) {
+  public EncodingDTO(String id, String name) {
+    this.id = id;
     this.name = name;
   }
 }
