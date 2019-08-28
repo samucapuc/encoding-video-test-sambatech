@@ -5,7 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -15,8 +17,8 @@ import br.com.samuel.sambatech.dto.error.ErrorResponseDTO;
 @Service
 public class MainService {
 
-  public static final String KEY_RESULT_BIT_MOVIN = "result";
-  public static final String KEY_DATA_BIT_MOVIN = "data";
+  private final String KEY_RESULT_BIT_MOVIN = "result";
+  private final String KEY_DATA_BIT_MOVIN = "data";
 
   @Autowired
   private RestTemplate restTemplate;
@@ -30,12 +32,12 @@ public class MainService {
   @Value("${bit.movin.api.key}")
   private String apiKey;
 
-  protected <T> String post(String urlApi, T object) {
+  protected <T> ResponseEntity<String> httpMethod(String urlApi, T object, HttpMethod method) {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     headers.set("X-Api-Key", apiKey);
     HttpEntity<?> request = new HttpEntity<>(getJSON(object), headers);
-    return restTemplate.postForObject(urlBaseBitMovin + urlApi, request, String.class);
+    return restTemplate.exchange(urlBaseBitMovin + urlApi, method, request, String.class);
   }
 
   private <T> String getJSON(T instance) throws RuntimeException {
@@ -47,11 +49,11 @@ public class MainService {
   }
 
   @SuppressWarnings("unchecked")
-  public <T> T returnObject(String endpoint, T instance, TypeReference<T> typeReference)
-      throws RuntimeException {
+  public <T> T returnObject(String endpoint, T instance, TypeReference<T> typeReference,
+      HttpMethod method) throws RuntimeException {
     try {
-      String jsonResult = post(endpoint, instance);
-      JSONObject jSONObject = new JSONObject(jsonResult);
+      ResponseEntity<String> jsonResult = httpMethod(endpoint, instance, method);
+      JSONObject jSONObject = new JSONObject(jsonResult.getBody());
       JSONObject resultObject;
       resultObject =
           jSONObject.getJSONObject(KEY_DATA_BIT_MOVIN).getJSONObject(KEY_RESULT_BIT_MOVIN);

@@ -4,47 +4,44 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.type.TypeReference;
 import br.com.samuel.sambatech.domain.Config;
-import br.com.samuel.sambatech.domain.VideoEnconding;
 import br.com.samuel.sambatech.dto.VideoDTO;
 import br.com.samuel.sambatech.dto.audio.AudioAccDTO;
 import br.com.samuel.sambatech.dto.audio.VideoH264DTO;
 import br.com.samuel.sambatech.dto.encoding.EncodingDTO;
 import br.com.samuel.sambatech.dto.inputs.InputFileHttpDTO;
-import br.com.samuel.sambatech.dto.muxings.Fmp4DTO;
+import br.com.samuel.sambatech.dto.muxings.Mp4DTO;
 import br.com.samuel.sambatech.dto.outputs.OutputDTO;
 import br.com.samuel.sambatech.dto.outputs.OutputS3DTO;
 import br.com.samuel.sambatech.dto.streams.InputFileDTO;
 import br.com.samuel.sambatech.dto.streams.StreamsInputDTO;
-import br.com.samuel.sambatech.repositories.VideoEncondingRepository;
-import br.com.samuel.sambatech.utils.ConverterUtils;
-import lombok.AllArgsConstructor;
+import br.com.samuel.sambatech.utils.MessageUtils;
+import br.com.samuel.sambatech.utils.Utils;
 
 @Service
-@AllArgsConstructor
 public class VideoEncodingService {
 
-  public static final String KEY_STREAM_AUDIO = "KEY_STREAM_AUDIO";
-  public static final String KEY_STREAM_VIDEO = "KEY_STREAM_AUDIO";
+  private static final String KEY_STREAM_AUDIO = "KEY_STREAM_AUDIO";
+  private static final String KEY_STREAM_VIDEO = "KEY_STREAM_VIDEO";
+  private static final String _AUDIO = "_audio";
+  private static final String _VIDEO = "_video";
 
-  private final MainService mainService;
+  @Autowired
+  private MainService mainService;
 
   @Autowired
   private ConfigService configService;
 
   @Autowired
   private S3Service s3Service;
-
-  @Autowired
-  private ConverterUtils converter;
-
-  @Autowired
-  private VideoEncondingRepository videoEncondingRepository;
 
   @Value("${bucket.videos.aws.s3}")
   private String bucketS3;
@@ -73,12 +70,29 @@ public class VideoEncodingService {
   @Value("${bit.movin.url.api.streams}")
   private String urlEndpointStreams;
 
-  @Value("${bit.movin.url.api.muxings.fmp4}")
-  private String urlEndpointMuxingsFmp4;
+  @Value("${bit.movin.url.api.muxings.mp4}")
+  private String urlEndpointMuxingsmp4;
 
-  public VideoEncodingService(MainService mainService) {
-    this.mainService = mainService;
-  }
+  @Value("${bit.movin.url.api.start}")
+  private String urlEndpointStartEncoding;
+
+  @Value("${path.encodings.videos.s3}")
+  private String pathVideosS3;
+
+  @Value("${link.videos.s3}")
+  private String linkVideosS3;
+
+  @Value("${bit.movin.url.api.encoding.details}")
+  private String urlEndpointEncodingDetails;
+
+  @Value("${bucket.videos.aws.s3.directory.original}")
+  private String pathDirectoryOriginal;
+
+  @Value("${format.encoding}")
+  private String formatFileExtension;
+
+  @Autowired
+  private MessageUtils messageUtils;
 
   /**
    * Gera as configurações e grava os ids no banco para nao precisar de gerar a cada requisição de
@@ -87,7 +101,7 @@ public class VideoEncodingService {
    */
   public void createEncodingsPreConfig() {
     Config cf = configService.findFirst();
-    if (cf == null) {
+    if (ObjectUtils.isEmpty(cf)) {
       cf = new Config();
       createOutputS3(cf);
       createAudioAcc(cf);
@@ -103,10 +117,10 @@ public class VideoEncodingService {
    */
   public void createOutputS3(Config cf) {
     // encoding/outputs/s3
-    OutputS3DTO os3 = mainService.returnObject(urlEndpointOutputS3,
-        new OutputS3DTO(bucketS3, accessKeyS3, secretKeyS3), new TypeReference<OutputS3DTO>() {});
-    System.out.println("IdOutputS3=" + os3.getId());
-    cf.setIdOutputS3(os3.getId());
+    cf.setIdOutputS3(mainService
+        .returnObject(urlEndpointOutputS3, new OutputS3DTO(bucketS3, accessKeyS3, secretKeyS3),
+            new TypeReference<OutputS3DTO>() {}, HttpMethod.POST)
+        .getId());
   }
 
   /**
@@ -116,10 +130,8 @@ public class VideoEncodingService {
    */
   public void createAudioAcc(Config cf) {
     // encoding/configurations/audio/aac
-    AudioAccDTO aacc = mainService.returnObject(urlEndpointConfigAudioAcc, new AudioAccDTO(),
-        new TypeReference<AudioAccDTO>() {});
-    System.out.println("AudioAccId=" + aacc.getId());
-    cf.setIdAudioAcc(aacc.getId());
+    cf.setIdAudioAcc(mainService.returnObject(urlEndpointConfigAudioAcc, new AudioAccDTO(),
+        new TypeReference<AudioAccDTO>() {}, HttpMethod.POST).getId());
   }
 
   /**
@@ -129,89 +141,118 @@ public class VideoEncodingService {
    */
   public void createVideoH264(Config cf) {
     // encoding/configurations/video/h264
-    VideoH264DTO videoH264 = mainService.returnObject(urlEndpointConfigVideoH264,
-        new VideoH264DTO(), new TypeReference<VideoH264DTO>() {});
-    System.out.println("VideoH264Id=" + videoH264.getId());
-    cf.setIdVideoH264(videoH264.getId());
+    cf.setIdVideoH264(mainService.returnObject(urlEndpointConfigVideoH264, new VideoH264DTO(),
+        new TypeReference<VideoH264DTO>() {}, HttpMethod.POST).getId());
   }
 
   public VideoDTO encondingVideo(MultipartFile multipartFile) throws Exception {
     URL url = s3Service.uploadFile(multipartFile);
     VideoDTO vdto =
         new VideoDTO(url.toString(), multipartFile.getOriginalFilename(), url.getAuthority());
-    VideoEnconding ve = videoEncondingRepository
-        .save((VideoEnconding) converter.convertObject(vdto, VideoEnconding.class));
-    vdto.setId(ve.getId());
     // get config output s3 mongodb
     Config cf = configService.findFirst();
     System.out.println("IdOutputS3=" + cf.getIdOutputS3());
     System.out.println("AudioAccId=" + cf.getIdAudioAcc());
     System.out.println("VideoH264Id=" + cf.getIdVideoH264());
-
     InputFileHttpDTO ifh = createHttpInput(vdto);
     System.out.println("IdInputFile=" + ifh.getId());
     EncodingDTO encoding = createEncoding(vdto);
     System.out.println("IdEncoding=" + encoding.getId());
     Map<String, StreamsInputDTO> mapStreams = createStreamsAudioAndVideo(vdto, cf, ifh, encoding);
-    createFmp4AudioAndVideo(ve, mapStreams, encoding, cf);
+    createMp4AudioAndVideo(mapStreams, encoding, cf);
+    startEncoding(encoding);
+    vdto.setId(encoding.getId());
+    System.out.println("Id=" + vdto.getId());
+    return vdto;
+  }
 
-
-    return (VideoDTO) converter.convertObject(ve, VideoDTO.class);
+  private void startEncoding(EncodingDTO encoding) {
+    // encoding/encodings/{encoding_id}/start
+    encoding = mainService.returnObject(
+        urlEndpointStartEncoding.replaceAll("\\{encoding_id}", encoding.getId()), encoding,
+        new TypeReference<EncodingDTO>() {}, HttpMethod.POST);
   }
 
   private InputFileHttpDTO createHttpInput(VideoDTO vdto) throws Exception {
     /// encoding/inputs/http
-    InputFileHttpDTO ifh = mainService.returnObject(urlEndpointInputHttpFile,
-        new InputFileHttpDTO(vdto.getId(), vdto.getName(), vdto.getServer()),
-        new TypeReference<InputFileHttpDTO>() {});
-    return ifh;
+    return mainService.returnObject(
+        urlEndpointInputHttpFile, new InputFileHttpDTO(vdto.getId(),
+            pathDirectoryOriginal + vdto.getName(), vdto.getServer()),
+        new TypeReference<InputFileHttpDTO>() {}, HttpMethod.POST);
   }
 
   private EncodingDTO createEncoding(VideoDTO vdto) {
     // encoding/encodings
-    return mainService.returnObject(urlEndpointEncoding, new EncodingDTO(vdto.getName()),
-        new TypeReference<EncodingDTO>() {});
+    return mainService.returnObject(urlEndpointEncoding,
+        new EncodingDTO(null,
+            Utils.changeExtensionFile(vdto.getName(), _VIDEO, formatFileExtension)),
+        new TypeReference<EncodingDTO>() {}, HttpMethod.POST);
   }
 
   private Map<String, StreamsInputDTO> createStreamsAudioAndVideo(VideoDTO vdto, Config cf,
       InputFileHttpDTO ifh, EncodingDTO encoding) {
     Map<String, StreamsInputDTO> mapStreams = new HashMap<>();
     // encoding/encodings/{encoding_id}/streams
-    StreamsInputDTO siAudio =
-        mainService.returnObject(urlEndpointStreams.replaceAll("\\{encoding_id}", encoding.getId()),
-            new StreamsInputDTO(cf.getIdAudioAcc(),
-                Arrays.asList(new InputFileDTO(ifh.getId(), vdto.getName()))),
-            new TypeReference<StreamsInputDTO>() {});
+    StreamsInputDTO siAudio = mainService.returnObject(
+        urlEndpointStreams.replaceAll("\\{encoding_id}", encoding.getId()),
+        new StreamsInputDTO(cf.getIdAudioAcc(),
+            Arrays.asList(new InputFileDTO(ifh.getId(), pathDirectoryOriginal + vdto.getName()))),
+        new TypeReference<StreamsInputDTO>() {}, HttpMethod.POST);
     System.out.println("IdStreamAudio=" + siAudio.getId());
     siAudio.setStreamId(siAudio.getId());
     mapStreams.put(KEY_STREAM_AUDIO, siAudio);
 
-    StreamsInputDTO siVideo =
-        mainService.returnObject(urlEndpointStreams.replaceAll("\\{encoding_id}", encoding.getId()),
-            new StreamsInputDTO(cf.getIdVideoH264(),
-                Arrays.asList(new InputFileDTO(ifh.getId(), vdto.getName()))),
-            new TypeReference<StreamsInputDTO>() {});
+    StreamsInputDTO siVideo = mainService.returnObject(
+        urlEndpointStreams.replaceAll("\\{encoding_id}", encoding.getId()),
+        new StreamsInputDTO(cf.getIdVideoH264(),
+            Arrays.asList(new InputFileDTO(ifh.getId(), pathDirectoryOriginal + vdto.getName()))),
+        new TypeReference<StreamsInputDTO>() {}, HttpMethod.POST);
     System.out.println("IdStreamVideo=" + siVideo.getId());
     siVideo.setStreamId(siVideo.getId());
     mapStreams.put(KEY_STREAM_VIDEO, siVideo);
     return mapStreams;
   }
 
-  private void createFmp4AudioAndVideo(VideoEnconding ve, Map<String, StreamsInputDTO> mapStreams,
-      EncodingDTO encoding, Config cf) {
-    String pathS3 = "ENCODING/" + ve.getId() + "/AUDIO";
-    Fmp4DTO fmp4Audio = mainService.returnObject(
-        urlEndpointMuxingsFmp4.replaceAll("\\{encoding_id}", encoding.getId()),
-        new Fmp4DTO(Arrays.asList(mapStreams.get(KEY_STREAM_AUDIO)),
-            Arrays.asList(new OutputDTO(cf.getIdOutputS3(), pathS3 + "/AUDIO"))),
-        new TypeReference<Fmp4DTO>() {});
-    System.out.println("IdFmp4Audio=" + fmp4Audio.getId());
+  private void createMp4AudioAndVideo(Map<String, StreamsInputDTO> mapStreams, EncodingDTO encoding,
+      Config cf) {
+    Mp4DTO mp4Audio = mainService.returnObject(
+        urlEndpointMuxingsmp4.replaceAll("\\{encoding_id}", encoding.getId()),
+        new Mp4DTO(Arrays.asList(mapStreams.get(KEY_STREAM_AUDIO)),
+            Arrays.asList(new OutputDTO(cf.getIdOutputS3(),
+                pathVideosS3.replaceAll("\\{encoding_id}", encoding.getId()))),
+            Utils.changeExtensionFile(encoding.getName(), _AUDIO, formatFileExtension)),
+        new TypeReference<Mp4DTO>() {}, HttpMethod.POST);
+    System.out.println("Idmp4Audio=" + mp4Audio.getId());
 
-    Fmp4DTO fmp4Video = mainService.returnObject(
-        urlEndpointMuxingsFmp4.replaceAll("\\{encoding_id}", encoding.getId()),
-        new Fmp4DTO(Arrays.asList(mapStreams.get(KEY_STREAM_VIDEO)),
-            Arrays.asList(new OutputDTO(cf.getIdOutputS3(), pathS3 + "/VIDEO"))),
-        new TypeReference<Fmp4DTO>() {});
-    System.out.println("IdFmp4Video=" + fmp4Video.getId());
+    Mp4DTO mp4Video = mainService.returnObject(
+        urlEndpointMuxingsmp4.replaceAll("\\{encoding_id}", encoding.getId()),
+        new Mp4DTO(Arrays.asList(mapStreams.get(KEY_STREAM_VIDEO)),
+            Arrays.asList(new OutputDTO(cf.getIdOutputS3(),
+                pathVideosS3.replaceAll("\\{encoding_id}", encoding.getId()))),
+            Utils.changeExtensionFile(encoding.getName(), StringUtils.EMPTY, formatFileExtension)),
+        new TypeReference<Mp4DTO>() {}, HttpMethod.POST);
+    System.out.println("Idmp4Video=" + mp4Video.getId());
+  }
+
+  public VideoDTO getEncodingDetails(String id) {
+    VideoDTO vdto = new VideoDTO();
+    EncodingDTO encoding =
+        mainService.returnObject(urlEndpointEncodingDetails.replaceAll("\\{encoding_id}", id),
+            new EncodingDTO(id, null), new TypeReference<EncodingDTO>() {}, HttpMethod.GET);
+    String msg = StringUtils.EMPTY;
+    switch (encoding.getStatus()) {
+      case "FINISHED":
+        msg = messageUtils.getMessage("msg.encoding.sucess", new Object[] {
+            linkVideosS3.replaceAll("\\{encoding_id}", id).concat(encoding.getName())});
+        break;
+      case "ERROR":
+        msg = messageUtils.getMessage("msg.encoding.error");
+        break;
+      default:
+        msg = messageUtils.getMessage("msg.encoding.running");
+        break;
+    }
+    vdto.setOutMessage(msg);
+    return vdto;
   }
 }
