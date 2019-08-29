@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import br.com.samuel.sambatech.dto.error.ErrorResponseDTO;
 
 @Service
 public class MainService {
@@ -52,18 +51,26 @@ public class MainService {
       throws RuntimeException {
     try {
       ResponseEntity<String> jsonResult = httpMethod(endpoint, instance, method);
-      JSONObject jSONObject = new JSONObject(jsonResult.getBody());
-      JSONObject resultObject;
-      resultObject =
-          jSONObject.getJSONObject(KEY_DATA_BIT_MOVIN).getJSONObject(KEY_RESULT_BIT_MOVIN);
+      JSONObject resultObject = getDataObject(jsonResult.getBody())
+          .getJSONObject(KEY_DATA_BIT_MOVIN).getJSONObject(KEY_RESULT_BIT_MOVIN);
       if (resultObject != null) {
-        return (T) mapper.readValue(resultObject.toString(), instance.getClass());
+        return (T) getParser(resultObject.toString(), instance.getClass());
       }
-      ErrorResponseDTO error = mapper.readValue(
-          jSONObject.getJSONObject(KEY_DATA_BIT_MOVIN).toString(), ErrorResponseDTO.class);
-      throw new RuntimeException(error.toString());
     } catch (Exception e) {
-      throw new RuntimeException(e.toString());
+      throw new RuntimeException(e);
+    }
+    return null;
+  }
+
+  private JSONObject getDataObject(String json) {
+    return new JSONObject(json).getJSONObject(KEY_DATA_BIT_MOVIN);
+  }
+
+  private <T> T getParser(String json, Class<T> cls) {
+    try {
+      return mapper.readValue(getDataObject(json).toString(), cls);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 }

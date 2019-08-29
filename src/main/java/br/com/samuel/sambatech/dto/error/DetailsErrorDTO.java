@@ -1,7 +1,6 @@
 package br.com.samuel.sambatech.dto.error;
 
 import java.io.Serializable;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,15 +8,15 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ErrorResponseDTO implements Serializable {
+public class DetailsErrorDTO implements Serializable {
   /**
   * 
   */
   private static final long serialVersionUID = 1L;
-  private Integer code;
-  private String message;
-  private String developerMessage;
-  private Set<LinkErrorDTO> links;
-  private Set<DetailsErrorDTO> details;
 
+  private String id;
+  private String date;
+  private String type;
+  private String text;
+  private String field;
 }

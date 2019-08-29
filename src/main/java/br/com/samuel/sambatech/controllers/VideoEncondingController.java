@@ -4,6 +4,8 @@ import java.net.URI;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,7 +16,7 @@ import br.com.samuel.sambatech.dto.VideoDTO;
 import br.com.samuel.sambatech.services.VideoEncodingService;
 
 @RestController
-@RequestMapping(value = "/api/enconding")
+@RequestMapping(value = "/api/encoding")
 public class VideoEncondingController {
 
   @Autowired
@@ -24,7 +26,13 @@ public class VideoEncondingController {
   public ResponseEntity<Void> encoding(@RequestParam("file") MultipartFile file) throws Exception {
     VideoDTO v = service.encondingVideo(file);
     URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-        .buildAndExpand(v.getUrlOutputVideo()).toUri();
+        .buildAndExpand(v.getId()).toUri();
     return ResponseEntity.created(uri).build();
+  }
+
+  @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+  public ResponseEntity<String> getEncoding(@PathVariable() String id) {
+    VideoDTO v = service.getEncodingDetails(id);
+    return ResponseEntity.ok().body(v.getOutMessage());
   }
 }
