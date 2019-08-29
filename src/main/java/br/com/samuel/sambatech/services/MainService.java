@@ -10,7 +10,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import br.com.samuel.sambatech.dto.error.ErrorResponseDTO;
 
@@ -49,8 +48,8 @@ public class MainService {
   }
 
   @SuppressWarnings("unchecked")
-  public <T> T returnObject(String endpoint, T instance, TypeReference<T> typeReference,
-      HttpMethod method) throws RuntimeException {
+  public <T> T returnObject(String endpoint, T instance, HttpMethod method)
+      throws RuntimeException {
     try {
       ResponseEntity<String> jsonResult = httpMethod(endpoint, instance, method);
       JSONObject jSONObject = new JSONObject(jsonResult.getBody());

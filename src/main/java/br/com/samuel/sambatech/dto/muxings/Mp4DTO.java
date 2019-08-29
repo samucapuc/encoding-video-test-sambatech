@@ -23,6 +23,14 @@ public class Mp4DTO implements Ivideo {
   private Integer segmentLength = 4;
   private String filename;
 
+  public Mp4DTO(String id, List<StreamsInputDTO> streams, List<OutputDTO> outputs,
+      String filename) {
+    this.id = id;
+    this.streams = streams;
+    this.outputs = outputs;
+    this.filename = filename;
+  }
+
   public Mp4DTO(List<StreamsInputDTO> streams, List<OutputDTO> outputs, String filename) {
     this.streams = streams;
     this.outputs = outputs;
