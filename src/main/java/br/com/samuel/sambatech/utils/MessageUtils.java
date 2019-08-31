@@ -14,10 +14,11 @@ public class MessageUtils {
   private MessageSource message;
 
   public String getMessage(String key) {
-    return message.getMessage(key, null, Locale.US);
+    // Locale ptBr = new Locale("pt", "BR");
+    return message.getMessage(key, null, Locale.getDefault());
   }
 
   public String getMessage(String key, Object... args) {
-    return message.getMessage(key, args, Locale.US);
+    return message.getMessage(key, args, Locale.getDefault());
   }
 }
