@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import br.com.samuel.sambatech.dto.error.ErrorResponseDTO;
+import br.com.samuel.sambatech.exceptions.InvalidResourceException;
+import br.com.samuel.sambatech.utils.MessageUtils;
 
 @Service
 public class MainService {
@@ -20,6 +23,9 @@ public class MainService {
 
   @Autowired
   private RestTemplate restTemplate;
+
+  @Autowired
+  private MessageUtils messageUtils;
 
   @Autowired
   private ObjectMapper mapper;
@@ -51,15 +57,17 @@ public class MainService {
       throws RuntimeException {
     try {
       ResponseEntity<String> jsonResult = httpMethod(endpoint, instance, method);
-      JSONObject resultObject = getDataObject(jsonResult.getBody())
-          .getJSONObject(KEY_DATA_BIT_MOVIN).getJSONObject(KEY_RESULT_BIT_MOVIN);
+      JSONObject dataObject = getDataObject(jsonResult.getBody());
+      JSONObject resultObject = dataObject.getJSONObject(KEY_RESULT_BIT_MOVIN);
       if (resultObject != null) {
         return (T) getParser(resultObject.toString(), instance.getClass());
       }
+      throw new InvalidResourceException(
+          messageUtils.getMessage("msg.error.acess.endpoint", (urlBaseBitMovin + endpoint)), method,
+          getParser(dataObject.toString(), ErrorResponseDTO.class));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    return null;
   }
 
   private JSONObject getDataObject(String json) {
@@ -68,7 +76,7 @@ public class MainService {
 
   private <T> T getParser(String json, Class<T> cls) {
     try {
-      return mapper.readValue(getDataObject(json).toString(), cls);
+      return mapper.readValue(json, cls);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

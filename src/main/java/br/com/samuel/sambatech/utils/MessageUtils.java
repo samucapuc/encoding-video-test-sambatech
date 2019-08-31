@@ -17,7 +17,7 @@ public class MessageUtils {
     return message.getMessage(key, null, Locale.US);
   }
 
-  public String getMessage(String key, Object[] args) {
+  public String getMessage(String key, Object... args) {
     return message.getMessage(key, args, Locale.US);
   }
 }
