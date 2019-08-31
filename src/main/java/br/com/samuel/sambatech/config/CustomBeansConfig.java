@@ -17,4 +17,5 @@ public class CustomBeansConfig {
   public RestTemplate restTemplate() {
     return new RestTemplate();
   }
+
 }

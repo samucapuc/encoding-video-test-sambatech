@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import br.com.samuel.sambatech.dto.error.ErrorResponseDTO;
@@ -59,7 +60,7 @@ public class MainService {
       ResponseEntity<String> jsonResult = httpMethod(endpoint, instance, method);
       JSONObject dataObject = getDataObject(jsonResult.getBody());
       JSONObject resultObject = dataObject.getJSONObject(KEY_RESULT_BIT_MOVIN);
-      if (resultObject != null) {
+      if (!ObjectUtils.isEmpty(resultObject)) {
         return (T) getParser(resultObject.toString(), instance.getClass());
       }
       throw new InvalidResourceException(
