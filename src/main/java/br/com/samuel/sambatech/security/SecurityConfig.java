@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -39,9 +40,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   private static final String[] PUBLIC_MATCHERS_GET = {"/login/**"};
 
+  private static final String[] PUBLIC_MATCHERS_SWAGGER = {"/v2/api-docs", "/configuration/ui",
+      "/swagger-resources/**", "/configuration/**", "/swagger-ui.html", "/webjars/**"};
+
+  @Override
+  public void configure(WebSecurity web) throws Exception {
+    web.ignoring().antMatchers(PUBLIC_MATCHERS_SWAGGER);
+  }
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
+    http.headers().frameOptions().disable();
     // habilita o cors para varias origens
     // desativa csrf pois não utiliza sessão para guardar dados do usuário
     http.cors().and().csrf().disable();
@@ -66,7 +75,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     CorsConfiguration configuration = new CorsConfiguration().applyPermitDefaultValues();
     configuration.setAllowedMethods(Arrays.asList(HttpMethod.POST.toString(),
         HttpMethod.GET.toString(), HttpMethod.PUT.toString(), HttpMethod.DELETE.toString(),
-        HttpMethod.OPTIONS.toString()));
+        HttpMethod.OPTIONS.toString(), HttpMethod.PATCH.toString()));
+    configuration.setAllowedOrigins(Arrays.asList("*"));
+    configuration.setAllowedHeaders(Arrays.asList("Content-Type", "api_key", "Authorization"));
     final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;
