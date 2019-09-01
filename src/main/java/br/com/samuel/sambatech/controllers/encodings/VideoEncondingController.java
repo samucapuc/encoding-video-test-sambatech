@@ -1,4 +1,4 @@
-package br.com.samuel.sambatech.controllers;
+package br.com.samuel.sambatech.controllers.encodings;
 
 import java.net.URI;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ import io.swagger.annotations.ApiResponses;
 @RequestMapping(value = "/api/encoding")
 @Validated
 @Api(value = "/api/encoding",
-    description = "Serviços para gerar encoding e consulta processo de geração")
+    description = "Serviços para gerar encoding e consultar situação da codificação")
 public class VideoEncondingController {
 
   @Autowired
@@ -47,15 +47,15 @@ public class VideoEncondingController {
     return ResponseEntity.created(uri).build();
   }
 
-  @GetMapping(value = "/{id}")
+  @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
   @ApiOperation(value = "Informe o id para consultar a situação da codificação")
   @ApiResponses(value = {@ApiResponse(code = 400, message = "Erro de validação"),
       @ApiResponse(code = 200, message = "Sucesso"),
       @ApiResponse(code = 400, message = "Erro de conversão"),
       @ApiResponse(code = 401, message = "Usuário não autenticado"),
       @ApiResponse(code = 403, message = "Usuário não autorizado")})
-  public ResponseEntity<String> getEncoding(@PathVariable() String id) {
+  public ResponseEntity<VideoDTO> getEncoding(@PathVariable() String id) {
     VideoDTO v = service.getEncodingDetails(id);
-    return ResponseEntity.ok().body(v.getOutMessage());
+    return ResponseEntity.ok().body(v);
   }
 }

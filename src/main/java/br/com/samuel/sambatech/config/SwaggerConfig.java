@@ -65,7 +65,7 @@ public class SwaggerConfig {
   @Bean
   public Docket api() {
     return new Docket(DocumentationType.SWAGGER_2).useDefaultResponseMessages(false).select()
-        .apis(RequestHandlerSelectors.basePackage("br.com.samuel.sambatech.controllers"))
+        .apis(RequestHandlerSelectors.basePackage("br.com.samuel.sambatech.controllers.encodings"))
         .paths(PathSelectors.any()).build().securitySchemes(Lists.newArrayList(apiKey()))
         .securityContexts(Lists.newArrayList(securityContext())).apiInfo(apiInfo());
   }

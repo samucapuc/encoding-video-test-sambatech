@@ -59,7 +59,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
               messageUtils.getMessage("authentication.exception.title"),
               messageUtils.getMessage("authentication.exception"),
               messageUtils.getMessage("authentication.exception.details"),
-              request.getRequestURL().toString())));
+              request.getRequestURL().toString(), null)));
       return;
     }
     chain.doFilter(request, response);

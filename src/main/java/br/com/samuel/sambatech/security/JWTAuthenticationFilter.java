@@ -74,10 +74,12 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         AuthenticationException exception) throws IOException, ServletException {
       response.setStatus(HttpStatus.UNAUTHORIZED.value());
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-      response.getWriter().append(json(new StandardError(new Date().getTime(),
-          HttpStatus.UNAUTHORIZED.value(), messageUtils.getMessage("label.unauthorized"),
-          messageUtils.getMessage("msg.authentication.user.password.invalid"),
-          messageUtils.getMessage("msg.authentication.user.password.invalid.details"), "/login")));
+      response.getWriter()
+          .append(json(new StandardError(new Date().getTime(), HttpStatus.UNAUTHORIZED.value(),
+              messageUtils.getMessage("label.unauthorized"),
+              messageUtils.getMessage("msg.authentication.user.password.invalid"),
+              messageUtils.getMessage("msg.authentication.user.password.invalid.details"), "/login",
+              null)));
     }
 
     private String json(StandardError error) {

@@ -2,6 +2,8 @@ package br.com.samuel.sambatech.services;
 
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import br.com.samuel.sambatech.domain.Users;
 import br.com.samuel.sambatech.repositories.UsersRepository;
@@ -17,5 +19,9 @@ public class UsersService {
     if (!Collections.isEmpty(users)) {
       users.forEach(u -> repo.save(u));
     }
+  }
+
+  public User authenticated() {
+    return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
   }
 }

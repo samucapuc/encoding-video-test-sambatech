@@ -31,7 +31,7 @@ public class ConstraintViolationExceptionHandler {
         HttpStatus.BAD_REQUEST.value(), messageUtils.getMessage("param.required.title"),
         messageUtils.getMessage("param.required", new Object[] {ex.getParameterName()}),
         ((ServletWebRequest) request).getRequest().getRequestURL().toString(),
-        request.getDescription(false));
+        request.getDescription(false), null);
     return ResponseEntity.badRequest().body(err);
   }
 
@@ -45,7 +45,7 @@ public class ConstraintViolationExceptionHandler {
           messageUtils.getMessage("error.validation.title"),
           messageUtils.getMessage("error.validation", new Object[] {error}),
           messageUtils.getMessage("error.validation.details"),
-          ((ServletWebRequest) request).getRequest().getRequestURL().toString()));
+          ((ServletWebRequest) request).getRequest().getRequestURL().toString(), null));
     }
     return new ResponseEntity<>(new ErrorResponse<>(listError), HttpStatus.BAD_REQUEST);
 
@@ -56,7 +56,7 @@ public class ConstraintViolationExceptionHandler {
       HttpServletRequest request) {
     StandardError err = new StandardError(System.currentTimeMillis(),
         HttpStatus.BAD_REQUEST.value(), messageUtils.getMessage("error.conversion"), e.getMessage(),
-        e.getMessage(), request.getRequestURL().toString());
+        e.getMessage(), request.getRequestURL().toString(), null);
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
   }
 

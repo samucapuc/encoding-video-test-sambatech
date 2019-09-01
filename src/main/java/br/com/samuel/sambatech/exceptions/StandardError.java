@@ -1,8 +1,10 @@
 package br.com.samuel.sambatech.exceptions;
 
 import java.io.Serializable;
+import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import br.com.samuel.sambatech.dto.error.DetailsErrorDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -18,4 +20,6 @@ public class StandardError implements Serializable {
   @JsonInclude(Include.NON_NULL)
   private String details;
   private String path;
+  private Set<DetailsErrorDTO> completionDetails;
+
 }

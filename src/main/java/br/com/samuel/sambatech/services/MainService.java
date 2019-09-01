@@ -82,4 +82,8 @@ public class MainService {
       throw new RuntimeException(e);
     }
   }
+
+  public ErrorResponseDTO getError(String json) {
+    return getParser(getDataObject(json).toString(), ErrorResponseDTO.class);
+  }
 }
