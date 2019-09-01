@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import com.mongodb.MongoSocketReadTimeoutException;
 import br.com.samuel.sambatech.dto.error.ErrorResponseDTO;
 import br.com.samuel.sambatech.exceptions.StandardError;
 import br.com.samuel.sambatech.services.MainService;
@@ -60,6 +61,21 @@ public class HandlerException {
     StandardError err =
         new StandardError(System.currentTimeMillis(), HttpStatus.BAD_REQUEST.value(),
             messageUtils.getMessage("error.conversion"), message, e.getMessage(),
+            ((ServletWebRequest) request).getRequest().getRequestURL().toString(), null);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
+  }
+
+  @ExceptionHandler(MongoSocketReadTimeoutException.class)
+  @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+  @ResponseBody
+  public ResponseEntity<StandardError> mongoReadTimeOut(MongoSocketReadTimeoutException e,
+      WebRequest request) {
+    String message =
+        e.getCause() != null ? e.getCause().getLocalizedMessage() : e.getLocalizedMessage();
+    StandardError err =
+        new StandardError(System.currentTimeMillis(), HttpStatus.BAD_REQUEST.value(),
+            messageUtils.getMessage("msg.erro.mongodb.read.time.out.title"),
+            messageUtils.getMessage("msg.erro.mongodb.read.time.out.message"), message,
             ((ServletWebRequest) request).getRequest().getRequestURL().toString(), null);
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
   }
