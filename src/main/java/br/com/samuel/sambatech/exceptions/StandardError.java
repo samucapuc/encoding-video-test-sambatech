@@ -10,6 +10,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
+@JsonInclude(Include.NON_NULL)
 public class StandardError implements Serializable {
   private static final long serialVersionUID = 1L;
 
@@ -17,7 +18,6 @@ public class StandardError implements Serializable {
   private Integer status;
   private String error;
   private String message;
-  @JsonInclude(Include.NON_NULL)
   private String details;
   private String path;
   private Set<DetailsErrorDTO> completionDetails;
