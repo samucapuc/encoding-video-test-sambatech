@@ -151,18 +151,12 @@ public class VideoEncodingService {
         new VideoDTO(url.toString(), multipartFile.getOriginalFilename(), url.getAuthority());
     // get config output s3 mongodb
     Config cf = configService.findFirst();
-    System.out.println("IdOutputS3=" + cf.getIdOutputS3());
-    System.out.println("AudioAccId=" + cf.getIdAudioAcc());
-    System.out.println("VideoH264Id=" + cf.getIdVideoH264());
     InputFileHttpDTO ifh = createHttpInput(vdto);
-    System.out.println("IdInputFile=" + ifh.getId());
     EncodingDTO encoding = createEncoding(vdto);
-    System.out.println("IdEncoding=" + encoding.getId());
     Map<String, StreamsInputDTO> mapStreams = createStreamsAudioAndVideo(vdto, cf, ifh, encoding);
     createMp4AudioAndVideo(mapStreams, encoding, cf);
     startEncoding(encoding);
     vdto.setId(encoding.getId());
-    System.out.println("Id=" + vdto.getId());
     return vdto;
   }
 
@@ -196,7 +190,6 @@ public class VideoEncodingService {
         new StreamsInputDTO(cf.getIdAudioAcc(),
             Arrays.asList(new InputFileDTO(ifh.getId(), pathDirectoryOriginal + vdto.getName()))),
         HttpMethod.POST);
-    System.out.println("IdStreamAudio=" + siAudio.getId());
     siAudio.setStreamId(siAudio.getId());
     mapStreams.put(KEY_STREAM_AUDIO, siAudio);
 
@@ -205,7 +198,6 @@ public class VideoEncodingService {
         new StreamsInputDTO(cf.getIdVideoH264(),
             Arrays.asList(new InputFileDTO(ifh.getId(), pathDirectoryOriginal + vdto.getName()))),
         HttpMethod.POST);
-    System.out.println("IdStreamVideo=" + siVideo.getId());
     siVideo.setStreamId(siVideo.getId());
     mapStreams.put(KEY_STREAM_VIDEO, siVideo);
     return mapStreams;
@@ -215,19 +207,17 @@ public class VideoEncodingService {
       Config cf) {
     String endpoint = urlEndpointMuxingsmp4.replaceAll("\\{encoding_id}", encoding.getId());
     String path = pathVideosS3.replaceAll("\\{encoding_id}", encoding.getId());
-    Mp4DTO mp4Audio = mainService.returnObject(endpoint,
+    mainService.returnObject(endpoint,
         new Mp4DTO(Arrays.asList(mapStreams.get(KEY_STREAM_AUDIO)),
             Arrays.asList(new OutputDTO(cf.getIdOutputS3(), path)),
             fileUtils.changeExtensionFile(encoding.getName(), _AUDIO, formatFileExtension)),
         HttpMethod.POST);
-    System.out.println("Idmp4Audio=" + mp4Audio.getId());
 
-    Mp4DTO mp4Video = mainService.returnObject(endpoint,
+    mainService.returnObject(endpoint,
         new Mp4DTO(Arrays.asList(mapStreams.get(KEY_STREAM_VIDEO)),
             Arrays.asList(new OutputDTO(cf.getIdOutputS3(), path)), fileUtils
                 .changeExtensionFile(encoding.getName(), StringUtils.EMPTY, formatFileExtension)),
         HttpMethod.POST);
-    System.out.println("Idmp4Video=" + mp4Video.getId());
   }
 
   public VideoDTO getEncodingDetails(String id) {

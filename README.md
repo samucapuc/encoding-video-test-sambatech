@@ -24,12 +24,16 @@ Esse projeto foi desenvolvido utilizando a biblioteca lombok(facilita geração 
 Para instalar o lombok no STS ou eclipse, baixe o jar em https://projectlombok.org/download e informe o executavel .exe do eclipse/STS. 
 Foi utilizado o STS 4.2.1.RELEASE como IDE para construir a aplicação
 
-## Comandos
+## Executar sem docker
+Só é possível a execução sem utilizar o docker para o profile dev
 
-- ``./mvnw spring-boot:run -Dspring.profiles.active=prod` para produção
+### Comandos
 - ``./mvnw spring-boot:run -Dspring.profiles.active=dev` para desenvolvimento
 - ``./mvnw test` para testes
 
+## Executar com docker
+
+### Comandos
 Foi utilizado o plugin dockerfile-maven-plugin do spotify para gerar a imagem encoding-video-test-sambatech-docker-image do docker. 
 As configurações estão dentro do arquivo ``Dockerfile``. Para isso, tenha o ``Docker`` instalado em sua máquina. Feito isso, execute os comandos:
   - ``./mvnw clean package dockerfile:build`` na raiz do projeto para gerar a imagem.
@@ -38,7 +42,7 @@ As configurações estão dentro do arquivo ``Dockerfile``. Para isso, tenha o `
   
     | CONTAINER_ID 	| IMAGE                                	                        | COMMAND                	| CREATED        	| STATUS        	| PORTS                  	| NAMES                                   	  |
     |--------------	|-------------------------------------------------------------	|------------------------	|----------------	|---------------	|------------------------	|-------------------------------------------	|
-    | acc11e7869aa 	| samucapuc/encoding-video-test-sambatech-docker-image:latest 	| "java -Dspring.profi…" 	| 18 minutes ago 	| Up 18 minutes 	| 0.0.0.0:8080->8080/tcp 	| encodingvideotestsambatech_teste-sambatech_1            	|
+    | acc11e7869aa 	| <SEU_USUARIO_DOCKER_HUB>/encoding-video-test-sambatech-docker-image:latest 	| "java -Dspring.profi…" 	| 18 minutes ago 	| Up 18 minutes 	| 0.0.0.0:8080->8080/tcp 	| encodingvideotestsambatech_teste-sambatech_1            	|
     
   - Em seguida, corra o comando ``docker logs -f <CONTAINER_ID>``, para acessar o log do container
 
@@ -106,31 +110,32 @@ Qualquer erro na aplicação, será retornado além do código HTTP, o json:
 
 ```json
 {
-    "timestamp": 1567475949671,
-    "status": <HTTP_CODE>,
-    "error": <TITULO>,
-    "message": <MENSAGEM_CURTA>,
-    "details": <DETALHE_ERRO_CASO_HOUVER>,
-    "path": <ENDPOINT_REQUISITADO>
+    "timestamp": "<TIMESTAMP>",
+    "status": "<HTTP_CODE>",
+    "error": "<TITULO>",
+    "message": "<MENSAGEM_CURTA>",
+    "details": "<DETALHE_ERRO_CASO_HOUVER>",
+    "path": "<ENDPOINT_REQUISITADO>"
 }
 ```
 
 ## Postman
 
-Os endpoints podem ser acessados em ``https://www.getpostman.com/collections/794f91878456045e620c`` e importados para testes no postman.
+Os endpoints podem ser acessados em https://www.getpostman.com/collections/794f91878456045e620c e importados para testes no postman.
 
 ## API Documentation
 
-A documentação no ``swagger`` pode ser acessada em ``http://localhost:8080/swagger-ui.html#!/default/login`` ou ``http://<IP_SEU_SERVER>:8080/swagger-ui.html#!/default/login``
+A documentação no ``Swagger`` pode ser acessada em http://localhost:8080/swagger-ui.html#!/default/login ou http://<IP_SEU_SERVER>:8080/swagger-ui.html#!/default/login
 
 ## Problemas encontrados / Melhorias a realizar
 
 ### Problemas:
   - Os vídeos estão sendo codificados sem o áudio;
   - Caso utilize o mongoDB do EC2, às vezes pode ocorrer erro de read timeout
+  
 ### Melhorias a realizar:
-  - Utilizar REST reativo;
-  - Utilizar o webhooks do bitmovin para avisar quando o vídeo foi codificado ou o andamento para mostrar ao usuário o progresso.
+  - Utilizar REST reativo para ir informando o usuário do processo e andamento;
+  - Utilizar o webhooks do bitmovin para avisar quando o vídeo foi codificado;
 
 ## UM POUCO MAIS DE DOCKER
 ### Subir imagem para DockerHub
