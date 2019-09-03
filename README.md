@@ -64,7 +64,7 @@ Envie um ``POST`` request para http://yourserverurl:8080/login (http://localhost
 }
 ```
 
-Uma resposta com código 200 com a autorização no header caso o login aconteça com sucesso:
+Uma resposta com código 200 com a autorização no header caso o login aconteça com sucesso, exemplo:
 Authorization=Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjbGllbnRlQHNhbWJhdGVjaC5jb20uYnIiLCJleHAiOjE1Njc1NjU0OTh9.XbnyxhRVWlzwT1PcBSHdMxa164i3rMRqWFs1rUPgt5cUAqjO3I4-ZthPvQiHkS8hu-pwFdt5KwSb12kMT1Gyhg
 
 IMPORTANTE: O token tem validade de 1 dia e deve ser ser passado no header ```Authorization``` para as próximas requisições.
@@ -151,4 +151,4 @@ A documentação no ``Swagger`` pode ser acessada em http://localhost:8080/swagg
 
 ## LICENSE
 
-Este projeto está licensiado por ``Apache License 2.0``.
+Este projeto está licenciado por ``Apache License 2.0``.
