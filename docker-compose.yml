@@ -1,0 +1,9 @@
+version: '3'
+services:
+  teste-sambatech:
+    image: samucapuc/encoding-video-test-sambatech-docker-image:latest
+    environment:
+      - MONGO_HOSTNAME=54.175.228.208
+      - MONGO_PORT=27018
+    ports:
+      - 8080:8080
