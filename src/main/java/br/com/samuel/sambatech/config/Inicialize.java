@@ -30,7 +30,7 @@ public class Inicialize implements CommandLineRunner {
     try {
       usersService.save(new HashSet<Users>(
           Arrays.asList(new Users(UUID.randomUUID().toString(), "cliente@sambatech.com.br",
-              "$2a$10$GjkIfVIt4fIrzEjOxSGstOpTr1miK7WdtSwpAXOACbf3a5kJZGWDO"))));
+              "$2a$10$LnkfERzOsgQ8uaYrDKb0AuqQLR9PpOsTWH9TY32vCmKl5LlL/Ejsu"))));
     } catch (DuplicateKeyException e) {
       LOG.info("Mensagem tratada de usuário duplicado ao iniciar");
     }
